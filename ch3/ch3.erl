@@ -5,6 +5,7 @@
 -export([reverse_create/1]).
 -export([filter/2]).
 -export([reverse/1]).
+-export([concatenate/1]).
 
 % 3-1
 % Write a function sum/1 which, given a positive integer N, will return the sum of all the integers between 1 and N.
@@ -96,3 +97,21 @@ reverse([N,M]) ->
 reverse(L) ->
   Size = length(L),
   [lists:last(L)] ++ reverse(lists:sublist(L,Size-1)).
+  
+% 3-5
+% Write a function that, given a list of lists, will concatenate them.
+% Example:
+% concatenate([[1,2,3], [], [4, five]]) ⇒ [1,2,3,4,five].
+
+% my algorithm:
+% concatenate([[1,2,3], [], [4, five]])
+% [1,2,3] ++ concatenate([[], [4, five]])
+% [1,2,3] ++ [] ++ concatenate([[4, five]])
+% [1,2,3] ++ [] ++ [4,five] ++ concatenate([])
+% [1,2,3] ++ [] ++ [4,five] ++ []
+% [1,2,3,4,five].
+
+concatenate([]) ->
+  [];
+concatenate([H | T]) ->
+  H ++ concatenate(T).
