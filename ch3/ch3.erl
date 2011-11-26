@@ -7,6 +7,7 @@
 -export([reverse/1]).
 -export([concatenate/1]).
 -export([flatten/1]).
+-export([quick_sort/1]).
 
 % 3-1
 % Write a function sum/1 which, given a positive integer N, will return the sum of all the integers between 1 and N.
@@ -165,3 +166,26 @@ put_elements_in_lists([H | T]) ->
     false ->
       [[H] | put_elements_in_lists(T)]
   end.
+
+% 3.6
+% Implement the following sort algorithms over lists:
+% Quicksort
+% The head of the list is taken as the pivot;
+% the list is then split according to those elements smaller than the pivot and the rest.
+% These two lists are then recursively sorted by quicksort, and joined together, with the pivot between them.
+quick_sort([Pivot | T]) ->
+  {Smallers, Rest} = smallers_and_rest(T, Pivot, {[],[]}),
+  lists:sort(Smallers) ++ [Pivot] ++ lists:sort(Rest).
+
+smallers_and_rest([], _, Acc) ->
+  Acc;
+smallers_and_rest([H | T], Pivot, Acc) ->
+  NewAcc = case H < Pivot of
+    true ->
+      Smallers = element(1, Acc),
+      setelement(1, Acc, Smallers ++ [H]);
+    false ->
+      Rest = element(2, Acc),
+      setelement(2, Acc, Rest ++ [H])      
+  end,
+  smallers_and_rest(T, Pivot, NewAcc).
