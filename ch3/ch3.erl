@@ -6,6 +6,7 @@
 -export([filter/2]).
 -export([reverse/1]).
 -export([concatenate/1]).
+-export([flatten/1]).
 
 % 3-1
 % Write a function sum/1 which, given a positive integer N, will return the sum of all the integers between 1 and N.
@@ -110,8 +111,57 @@ reverse(L) ->
 % [1,2,3] ++ [] ++ [4,five] ++ concatenate([])
 % [1,2,3] ++ [] ++ [4,five] ++ []
 % [1,2,3,4,five].
-
 concatenate([]) ->
   [];
 concatenate([H | T]) ->
   H ++ concatenate(T).
+  
+% 3-5
+% Write a function that, given a list of nested lists, will return a flat list.
+% Example:
+% flatten([[1,[2,[3],[]]], [[[4]]], [5,6]]) ⇒ [1,2,3,4,5,6].
+% Hint: use concatenate to solve flatten.
+flatten([]) ->
+  [];
+flatten(L) ->
+  case has_list_elements(L) of
+    false ->
+      L;
+    true ->
+      case has_non_list_elements(L) of
+        true ->
+          flatten(concatenate(put_elements_in_lists(L)));
+        false ->
+          flatten(concatenate(L))
+      end
+  end.
+
+has_non_list_elements([]) ->
+  false;
+has_non_list_elements([H | T]) ->
+  case is_list(H) of
+    true ->
+      has_non_list_elements(T);
+    false ->
+      true
+  end.
+  
+has_list_elements([]) ->
+  false;
+has_list_elements([H | T]) ->
+  case is_list(H) of
+    true ->
+      true;
+    false ->
+      has_list_elements(T)
+  end. 
+
+put_elements_in_lists([]) ->
+  [];
+put_elements_in_lists([H | T]) ->
+  case is_list(H) of
+    true ->
+      [H | put_elements_in_lists(T)];
+    false ->
+      [[H] | put_elements_in_lists(T)]
+  end.
