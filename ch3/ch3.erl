@@ -8,6 +8,7 @@
 -export([concatenate/1]).
 -export([flatten/1]).
 -export([quick_sort/1]).
+-export([index/1]).
 
 % 3-1
 % Write a function sum/1 which, given a positive integer N, will return the sum of all the integers between 1 and N.
@@ -189,3 +190,38 @@ smallers_and_rest([H | T], Pivot, Acc) ->
       setelement(2, Acc, Rest ++ [H])      
   end,
   smallers_and_rest(T, Pivot, NewAcc).
+  
+% Exercise 3-9: Indexing
+% A raw document is a list of lines (i.e., strings), whereas a document is a list of words.
+% Write a function to read a text file into a raw document and then a document.
+% You want to write an index for a document.
+% This will give a list of words paired with their occurrences, so that the word Erlang might have the following entry:
+% { "Erlang", [1,1,2,4,5,6,6,98,100,102,102] }
+% Write a function that will print this in a readable form, such as the following:
+% "Erlang       1-2,4-6,98,100,102"
+% so that duplicates are removed and adjacent numbers are put into a range.
+% You might like to think of doing this via a function that turns the earlier list of occurrences into a list such as this:
+% [{1,2},{4,6},{98,98},{100,100},{102,102}]
+% through a sequence of transformations.
+index(Text) ->
+  Lines = string:tokens(Text, "\n"),
+  Index = [],
+  handle_lines(Lines, 1, Index).
+  
+handle_lines([], _, Index) ->
+  Index;
+handle_lines([Line | Tail], LineNumber, Index) ->
+  Words = string:tokens(Line, " \t"),
+  UpdatedIndex = handle_words(Words, LineNumber, Index),
+  handle_lines(Tail, LineNumber + 1, UpdatedIndex).  
+  
+handle_words([], _, Index) ->
+  Index;
+handle_words([Word | Tail], LineNumber, Index) ->
+  UpdatedIndex = case lists:keyfind(Word, 1, Index) of
+    false ->
+      Index ++ [{Word, [LineNumber]}];
+    IndexEntry ->
+      lists:keyreplace(Word, 1, Index, {Word, element(2, IndexEntry) ++ LineNumber})
+  end,
+  handle_words(Tail, LineNumber, UpdatedIndex).
