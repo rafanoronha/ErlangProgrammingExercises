@@ -8,7 +8,7 @@
 -export([concatenate/1]).
 -export([flatten/1]).
 -export([quick_sort/1]).
--export([index/1]).
+-export([index/2]).
 
 % 3-1
 % Write a function sum/1 which, given a positive integer N, will return the sum of all the integers between 1 and N.
@@ -203,7 +203,11 @@ smallers_and_rest([H | T], Pivot, Acc) ->
 % You might like to think of doing this via a function that turns the earlier list of occurrences into a list such as this:
 % [{1,2},{4,6},{98,98},{100,100},{102,102}]
 % through a sequence of transformations.
-index(Text) ->
+index(file, FileName) ->
+  {ok, Binary} = file:read_file(FileName),
+  Text = erlang:binary_to_list(Binary),
+  index(text, Text);
+index(text, Text) ->
   Lines = string:tokens(Text, "\n"),
   Index = [],
   handle_lines(Lines, 1, Index).
@@ -222,6 +226,46 @@ handle_words([Word | Tail], LineNumber, Index) ->
     false ->
       Index ++ [{Word, [LineNumber]}];
     IndexEntry ->
-      lists:keyreplace(Word, 1, Index, {Word, element(2, IndexEntry) ++ LineNumber})
+      lists:keyreplace(Word, 1, Index, {Word, element(2, IndexEntry) ++ [LineNumber]})
   end,
   handle_words(Tail, LineNumber, UpdatedIndex).
+
+print_index([]) ->
+  ok;
+print_index([IndexEntry | Tail]) ->
+  Word = element(1, IndexEntry),
+  Occurrences = lists:usort(element(2, IndexEntry)), % usort removes duplicates
+  HandledOccurrences = handle_adjacencies(Occurrences, [], []),
+  io:format("~s \t ~s\n", [Word, format_occurrences(HandledOccurrences)]),
+  print_index(Tail).
+  
+format_occurrences([{Begin, End} | Tail]) ->
+  case Begin == End of
+    true ->
+      integer_to_list(Begin) ++ "," ++ format_occurrences(Tail);
+    false ->
+      integer_to_list(Begin) ++ " - " ++ integer_to_list(End) ++ "," ++ format_occurrences(Tail)
+  end;
+format_occurrences(_) ->
+  [].
+  
+% handle_adjacencies([1,2,7,9], [], [])
+% handle_adjacencies([2,7,9], [1], [])
+% handle_adjacencies([7,9], [1,2], [])
+% handle_adjacencies([9], [7], [{1,2}])
+% handle_adjacencies([], [9], [{1,2}, {7,7}])
+% handle_adjacencies([], [], [{1,2}, {7,7}, {9,9}])
+% [{1,2}, {7,7}, {9,9}]
+handle_adjacencies([H | T], [], Handled) ->
+  handle_adjacencies(T, [H], Handled);
+handle_adjacencies([], CurrentAdjacency, Handled) ->
+  Handled ++ [{hd(CurrentAdjacency), lists:last(CurrentAdjacency)}];
+handle_adjacencies([H | T], CurrentAdjacency, Handled) ->
+  AdjacencyBegin = hd(CurrentAdjacency),
+  AdjacencyEnd = lists:last(CurrentAdjacency),
+  case H == AdjacencyEnd + 1 of
+    true ->
+      handle_adjacencies(T, CurrentAdjacency ++ [H], Handled);
+    false ->
+      handle_adjacencies(T, [H], Handled ++ [{AdjacencyBegin, AdjacencyEnd}])
+  end.
