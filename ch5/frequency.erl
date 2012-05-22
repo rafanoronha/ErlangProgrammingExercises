@@ -52,8 +52,8 @@ loop(Frequencies) ->
       reply(Pid, Reply),
       loop(NewFrequencies);
     {request, Pid , {deallocate, Freq}} ->
-      NewFrequencies = deallocate(Frequencies, Freq),
-      reply(Pid, ok),
+      {Result, NewFrequencies} = deallocate(Frequencies, Freq, Pid),
+      reply(Pid, Result),
       loop(NewFrequencies);
     {request, Pid, stop} ->
       reply(Pid, ok)
@@ -70,6 +70,11 @@ allocate({[], Allocated}, _Pid) ->
 allocate({[Freq|Free], Allocated}, Pid) ->
   {{Free, [{Freq, Pid}|Allocated]}, {ok, Freq}}.
 
-deallocate({Free, Allocated}, Freq) ->
-  NewAllocated=lists:keydelete(Freq, 1, Allocated),
-  {[Freq|Free],  NewAllocated}.
+deallocate({Free, Allocated}, Freq, Pid) ->
+  RequestedFrequency = lists:keyfind(Freq, 1, Allocated),
+  Response = case RequestedFrequency of
+    false -> {{error, no_frequency}, {Free, Allocated}};
+    {Freq, Pid} -> {ok, {[Freq|Free],  lists:keydelete(Freq, 1, Allocated)}}; 
+    {Freq, _Pid} -> {{error, forbidden}, {Free, Allocated}}
+  end,
+  Response.
