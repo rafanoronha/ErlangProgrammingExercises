@@ -78,7 +78,14 @@ reply(Pid, Reply) ->
 allocate({[], Allocated}, _Pid) ->
   {{[], Allocated}, {error, no_frequency}};
 allocate({[Freq|Free], Allocated}, Pid) ->
-  {{Free, [{Freq, Pid}|Allocated]}, {ok, Freq}}.
+  ClientFrequencies = fun({_Freq, ClientPid}) -> Pid == ClientPid end,
+  ClientAllocations = 1 + length(lists:filter(ClientFrequencies, Allocated)),
+  Ok = ClientAllocations =< 3,
+  Response = case Ok of
+    true -> {{Free, [{Freq, Pid}|Allocated]}, {ok, Freq}};
+    false -> {{[Freq|Free], Allocated}, {error, allocation_limit}}
+  end,
+  Response.
 
 deallocate({Free, Allocated}, Freq, Pid) ->
   RequestedFrequency = lists:keyfind(Freq, 1, Allocated),
