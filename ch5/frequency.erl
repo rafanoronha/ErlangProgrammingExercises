@@ -56,7 +56,17 @@ loop(Frequencies) ->
       reply(Pid, Result),
       loop(NewFrequencies);
     {request, Pid, stop} ->
-      reply(Pid, ok)
+      Ok = case Frequencies of
+        {_Free, []} -> true;
+        _Other -> false
+      end,
+      case Ok of
+        true ->
+          reply(Pid, ok);
+        _False ->
+          reply(Pid, {error, has_open_frequencies}),
+          loop(Frequencies)
+      end
   end.
 
 reply(Pid, Reply) ->
